@@ -5,7 +5,7 @@ import {
 } from 'typeorm';
 export abstract class BaseEntity {
   @PrimaryGeneratedColumn()
-  id: string;
+  id: number;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

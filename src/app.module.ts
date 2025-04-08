@@ -11,9 +11,9 @@ import { UserModule } from './user/user.module';
       type: 'postgres',
       host: process.env.DATABASE_HOST || 'localhost',
       port: +(process.env.DATABASE_PORT || 5432),
-      username: process.env.DATABASE_USER || 'my_user',
-      password: process.env.DATABASE_PASSWORD || 'my_password',
-      database: process.env.DATABASE_NAME || 'my_database',
+      username: process.env.DATABASE_USER || 'myuser',
+      password: process.env.DATABASE_PASSWORD || 'mypassword',
+      database: process.env.DATABASE_NAME || 'mydatabase',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true, // Set to false in production
     }),

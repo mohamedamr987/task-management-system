@@ -1,13 +1,12 @@
-import { Entity, BeforeInsert } from 'typeorm';
+import { Entity } from 'typeorm';
 import { BaseEntity } from 'src/entities/base.entity';
 import { UserRole } from 'src/enums/user-role.enum';
 import { Exclude } from 'class-transformer';
 import { IsEmail, IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import * as bcrypt from 'bcrypt';
 
 @Entity('users')
-export class UserEntity extends BaseEntity {
+export class User extends BaseEntity {
   @ApiProperty({
     example: 'Mohamed Amr',
     description: 'User name',
@@ -39,11 +38,4 @@ export class UserEntity extends BaseEntity {
     description: 'User role',
   })
   role: UserRole;
-
-  @BeforeInsert()
-  async hashPassword() {
-    if (this.password) {
-      this.password = await bcrypt.hash(this.password, 10);
-    }
-  }
 }
