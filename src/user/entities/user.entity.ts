@@ -1,11 +1,11 @@
-import { Entity } from 'typeorm';
+import { Entity, Column } from 'typeorm';
 import { BaseEntity } from 'src/entities/base.entity';
 import { UserRole } from 'src/enums/user-role.enum';
 import { Exclude } from 'class-transformer';
 import { IsEmail, IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-@Entity('users')
+@Entity()
 export class User extends BaseEntity {
   @ApiProperty({
     example: 'Mohamed Amr',
@@ -13,6 +13,7 @@ export class User extends BaseEntity {
     required: true,
   })
   @IsString({})
+  @Column()
   name: string;
 
   @ApiProperty({
@@ -20,12 +21,19 @@ export class User extends BaseEntity {
     required: true,
     description: 'User email',
   })
-  @IsString()
   @IsEmail()
+  @IsString()
+  @Column({ unique: true })
   email: string;
 
-  @Exclude()
   @IsString()
+  @Column()
+  @ApiProperty({
+    example: 'SecurePass123!',
+    description: 'User password',
+    required: true,
+  })
+  @Exclude()
   password: string;
 
   // make the default value user
@@ -37,5 +45,6 @@ export class User extends BaseEntity {
     required: false,
     description: 'User role',
   })
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   role: UserRole;
 }

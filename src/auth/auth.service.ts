@@ -33,19 +33,21 @@ export class AuthService {
   }
 
   async signUp(createUserDto: CreateUserDto): Promise<User> {
-    const existingUser = await this.userService.findOne({
-      where: { email: createUserDto.email },
-    });
+    const existingUser = await this.userService.findOne(createUserDto);
     if (existingUser) {
       throw new ConflictException('Email already exists');
     }
     const hashedPassword = await argon2.hash(createUserDto.password);
     createUserDto.password = hashedPassword;
-    const user = await this.userService.create(createUserDto);
+    let user = await this.userService.create(createUserDto);
     if (!user) {
       throw new InternalServerErrorException('Failed to create user');
     }
-
+    //remove password from user object before returning
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...userWithoutPassword } = user;
+    user = userWithoutPassword as User;
+    // Generate access token for the user
     const accessToken = await this.generateAccessToken(user.id);
     const userWithToken = { ...user, accessToken };
     return userWithToken;
@@ -53,9 +55,7 @@ export class AuthService {
 
   async login(userId: number): Promise<{ user: User; accessToken: string }> {
     const accessToken = await this.generateAccessToken(userId);
-    const user = await this.userService.findOne({
-      where: { id: userId },
-    });
+    const user = await this.userService.findOneById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -65,15 +65,14 @@ export class AuthService {
   async generateAccessToken(userId: number): Promise<string> {
     const payload: AuthJwtPayload = { sub: userId };
     const accessToken = await this.jwtService.signAsync(payload, {
-      secret: process.env.JWT_SECRET,
+      secret:
+        '7sFHZrGLIMIwTotAEyNS/j4yUEW7OtYmGebnAKWQOBJ/kB+ur4XnGt1oxnRC9HUOUK+hBfcOmqw+BmlgXFB4zRzte6LRqvXlLrNiXO+REDKycfYBFywXtFQ65ZE0B5Z9EwFXaP29QysUSc2HxDeWIMzfl5nMYDj0TYHEYPJPs2Zb4hKNPIpHdA2e+8r6imFsD5C5vh0P3psnLTX8liWgkC+8ENf1YxiORqAMt9kQ9Ola7WSkaTKe6dqLKGHDMeICTw2YcCZ7+I9yT4Umgncqz78pAsBHDJPE/oFMtxw9/moCMoMH2D6dJ34R09OQ/gv8lwIjKZfBVGNsqxHW8vuppw==',
     });
     return accessToken;
   }
 
   async validateJwtUser(userId: number): Promise<User> {
-    const user = await this.userService.findOne({
-      where: { id: userId },
-    });
+    const user = await this.userService.findOneById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
     }

@@ -1,23 +1,42 @@
 // user.controller.ts
-import { Controller } from '@nestjs/common';
-import { Crud, CrudController } from '@nestjsx/crud';
-import { User } from './entities/user.entity';
+import {
+  Controller,
+  Get,
+  Param,
+  Body,
+  Post,
+  Delete,
+  Patch,
+} from '@nestjs/common';
 import { UserService } from './user.service';
-
-@Crud({
-  model: { type: User },
-  dto: {
-    create: 'CreateUserDto',
-    update: 'UpdateUserDto',
-  },
-  query: {
-    limit: 10,
-    maxLimit: 100,
-    cache: 2000,
-    filter: { age: { $gt: 18 } }, // Default filter
-  },
-})
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { CreateUserDto } from './dto/create-user.dto';
+@ApiBearerAuth('JWT-auth') // Adds the auth lock icon and enables token input
 @Controller('users')
-export class UserController implements CrudController<User> {
+export class UserController {
   constructor(public service: UserService) {}
+
+  @Get(':id')
+  async findOne(@Param('id') id: number) {
+    return this.service.findOne(id);
+  }
+
+  @Get()
+  async findAll(@Body() data: Partial<CreateUserDto>) {
+    return this.service.findAll(data);
+  }
+
+  @Post()
+  async create(@Body() data: CreateUserDto) {
+    return this.service.create(data);
+  }
+
+  @Patch(':id')
+  async update(@Param('id') id: number, @Body() data: Partial<CreateUserDto>) {
+    return this.service.update(id, data);
+  }
+  @Delete(':id')
+  async remove(@Param('id') id: number) {
+    return this.service.remove(id);
+  }
 }
