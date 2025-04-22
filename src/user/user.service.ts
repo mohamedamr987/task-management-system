@@ -3,52 +3,30 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException } from '@nestjs/common';
+import { BaseService } from '../common/services/base.service';
+import * as argon2 from 'argon2';
 
 @Injectable()
-export class UserService {
+export class UserService extends BaseService<User> {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) {}
+  ) {
+    super(userRepository);
+  }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const user = this.userRepository.create(createUserDto);
-    return await this.userRepository.save(user);
-  }
-
-  async findAll(data: Partial<CreateUserDto>): Promise<User[]> {
-    return await this.userRepository.find({ where: data });
-  }
-
-  async findOneById(id: number): Promise<User> {
-    const user = await this.userRepository.findOne({ where: { id } });
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+    const existingUser = await this.findOne({
+      where: {
+        email: createUserDto.email,
+      },
+    });
+    if (existingUser) {
+      throw new ConflictException('User with this data already exists');
     }
-    return user;
-  }
-  async findOne(data: any): Promise<User> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const user = await this.userRepository.findOne({ where: data });
-    if (!user) {
-      throw new NotFoundException(`User not found`);
-    }
-    return user;
-  }
-
-  async update(
-    id: number,
-    updateUserDto: Partial<CreateUserDto>,
-  ): Promise<User> {
-    await this.userRepository.update(id, updateUserDto);
-    return this.findOne(id);
-  }
-
-  async remove(id: number): Promise<void> {
-    const result = await this.userRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
+    const hashedPassword = await argon2.hash(createUserDto.password);
+    createUserDto.password = hashedPassword;
+    return await this.userRepository.save(createUserDto);
   }
 }
