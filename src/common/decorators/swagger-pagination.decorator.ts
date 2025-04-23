@@ -23,7 +23,6 @@ export function SwaggerPagination() {
       required: false,
       type: String,
       description: 'Sort field',
-      example: 'name',
     }),
     ApiQuery({
       name: 'order',
@@ -37,7 +36,6 @@ export function SwaggerPagination() {
       required: false,
       type: String,
       description: 'Filter field',
-      example: 'name',
     }),
   );
 }

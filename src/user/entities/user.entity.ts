@@ -1,9 +1,10 @@
-import { Entity, Column } from 'typeorm';
-import { BaseEntity } from 'src/entities/base.entity';
+import { Entity, Column, OneToMany } from 'typeorm';
+import { BaseEntity } from 'src/common/entities/base.entity';
 import { UserRole } from 'src/enums/user-role.enum';
 import { Exclude } from 'class-transformer';
 import { IsEmail, IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Task } from 'src/task/entities/task.entity';
 
 @Entity()
 export class User extends BaseEntity {
@@ -47,4 +48,7 @@ export class User extends BaseEntity {
   })
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   role: UserRole;
+
+  @OneToMany(() => Task, (task) => task.userId, { nullable: true })
+  tasks: Task[];
 }

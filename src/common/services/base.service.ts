@@ -19,6 +19,7 @@ export abstract class BaseService<T extends ObjectLiteral> {
       sort = 'id',
       order = 'ASC',
       filter,
+      populate = [], // Added populate parameter
       ...filters
     } = query;
 
@@ -28,17 +29,24 @@ export abstract class BaseService<T extends ObjectLiteral> {
       (col) => col.propertyName,
     );
 
-    // Apply filters with partial matching (ILIKE)
     for (const [key, value] of Object.entries(filters)) {
       if (
         value !== undefined &&
         value !== '' &&
         entityColumns.includes(key) &&
-        typeof value === 'string'
+        typeof value === 'string' &&
+        // doesn't contain id in key
+        !key.toLowerCase().includes('id')
       ) {
         qb.andWhere(`entity.${key} ILIKE :${key}`, {
           [key]: `%${value}%`,
         });
+      }
+      if (key.toLowerCase().includes('id')) {
+        const ids = (value as string)
+          .split(',')
+          .map((id: string) => Number(id.trim()));
+        qb.andWhere(`entity.${key} IN (:...ids)`, { ids });
       }
     }
 
@@ -62,6 +70,13 @@ export abstract class BaseService<T extends ObjectLiteral> {
       }
     }
 
+    // Apply population (eager loading)
+    if (populate && populate.length > 0) {
+      (populate as [string]).forEach((field) => {
+        qb.leftJoinAndSelect(`entity.${field}`, field);
+      });
+    }
+
     const [data, total] = await qb.getManyAndCount();
 
     return {
@@ -72,8 +87,16 @@ export abstract class BaseService<T extends ObjectLiteral> {
     };
   }
 
-  async findOneById(id: number): Promise<T> {
-    const entity = await this.repo.findOneBy({ id } as any);
+  async findOneById(id: number, populate: string[] = []): Promise<T> {
+    const qb = this.repo.createQueryBuilder('entity').where('entity.id = :id', {
+      id,
+    });
+    if (populate && populate.length > 0) {
+      (populate as [string]).forEach((field) => {
+        qb.leftJoinAndSelect(`entity.${field}`, field);
+      });
+    }
+    const entity = await qb.getOne();
     if (!entity) throw new NotFoundException(`Item with ID ${id} not found`);
     return entity;
   }
