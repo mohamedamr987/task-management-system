@@ -69,4 +69,28 @@ export class TaskController {
   findOne(@Param('id') id: string) {
     return this.taskService.findOneById(+id);
   }
+
+  @ApiOperation({ summary: 'Update a task by ID' })
+  @ApiResponse({ status: 200, description: 'Task updated successfully' })
+  @ApiResponse({ status: 404, description: 'Task not found' })
+  @Patch(':id')
+  update(
+    @Param('id') id: string,
+    @Body() updateTaskDto: CreateTaskDto,
+    @Request() req,
+  ) {
+    const user = req.user;
+    if (user?.role === UserRole.USER) {
+      updateTaskDto.userId = user.id;
+    }
+    return this.taskService.update(+id, updateTaskDto);
+  }
+
+  @ApiOperation({ summary: 'Delete a task by ID' })
+  @ApiResponse({ status: 200, description: 'Task deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Task not found' })
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.taskService.remove(+id);
+  }
 }
